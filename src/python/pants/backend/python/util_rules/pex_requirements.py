@@ -142,7 +142,7 @@ def is_probably_pex_json_lockfile(lockfile_bytes: bytes) -> bool:
 def is_pylock_path(lockfile_path: str) -> bool:
     """Check if the lockfile path is a pylock.toml file."""
     p = PurePath(lockfile_path)
-    return p.stem == "pylock" and p.suffix == ".toml"
+    return p.stem.startswith("pylock") and p.suffix == ".toml"
 
 
 def _pex_lockfile_requirement_count(lockfile_bytes: bytes) -> int:
