@@ -41,15 +41,14 @@ from pants.backend.python.util_rules.pex_requirements import (
     LoadedLockfile,
     LoadedLockfileRequest,
     Lockfile,
-)
-from pants.backend.python.util_rules.pex_requirements import (
-    PexRequirements as PexRequirements,  # Explicit re-export.
-)
-from pants.backend.python.util_rules.pex_requirements import (
     Resolve,
     ResolvePexConfig,
     ResolvePexConfigRequest,
+    is_pylock_path,
     validate_metadata,
+)
+from pants.backend.python.util_rules.pex_requirements import (
+    PexRequirements as PexRequirements,  # Explicit re-export.
 )
 from pants.build_graph.address import Address
 from pants.core.target_types import FileSourceField, ResourceSourceField
@@ -552,7 +551,11 @@ async def _setup_pex_requirements(
             lockfile = await Get(Lockfile, Resolve, request.requirements.from_superset)
         loaded_lockfile = await Get(LoadedLockfile, LoadedLockfileRequest(lockfile))
         argv = (
-            ["--lock", loaded_lockfile.lockfile_path, *pex_lock_resolver_args]
+            [
+                "--pylock" if is_pylock_path(loaded_lockfile.lockfile_path) else "--lock",
+                loaded_lockfile.lockfile_path,
+                *pex_lock_resolver_args,
+            ]
             if loaded_lockfile.is_pex_native
             # We use pip to resolve a requirements.txt pseudo-lockfile, possibly with hashes.
             else [
@@ -625,7 +628,7 @@ async def _setup_pex_requirements(
             [loaded_lockfile.lockfile_digest],
             [
                 *reqs_info.req_strings,
-                "--lock",
+                "--pylock" if is_pylock_path(loaded_lockfile.lockfile_path) else "--lock",
                 loaded_lockfile.lockfile_path,
                 *pex_lock_resolver_args,
             ],
